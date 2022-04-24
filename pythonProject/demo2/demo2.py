@@ -205,7 +205,6 @@ def extract_test2(count):
         tar.extract(tarinfo, path)
         count.sub()
 
-
     # Reverse sort directories.
     directories.sort(key=operator.attrgetter('name'))
     directories.reverse()
@@ -248,15 +247,80 @@ class Count:
         return self.num
 
 
+def progressBar(progress, total):
+    print("==progressbar", progress, total)
+
+
+def showProgress(file_numbers, total_number):
+    while True:
+        num = file_numbers.cnt()
+        if num > 0:
+            time.sleep(0.5)
+            progressBar(total_number - num, total_number)
+        else:
+            break
+    progressBar(total_number, total_number)
+
+
+def extract_file(file_name, path="."):
+    tar = tarfile.open(file_name)
+    members = tar.getmembers()
+    file_count = len(members)
+    file_numbers = Count()
+    file_numbers.set(file_count)
+    t = threading.Thread(target=showProgress, args=(file_numbers, file_count,))
+    t.setDaemon(True)
+    t.start()
+    directories = []
+
+    i = 0
+    for tarinfo in members:
+        if tarinfo.isdir():
+            # Extract directories with a safe mode.
+            directories.append(tarinfo)
+            tarinfo = copy.copy(tarinfo)
+            tarinfo.mode = 0700
+        tar.extract(tarinfo, path)
+        i = i + 1
+        # print(i, file_count)
+        if i != file_count:
+            file_numbers.sub()
+
+    print("=============file_numbers cnt:", file_numbers.cnt())
+    # Reverse sort directories.
+    directories.sort(key=operator.attrgetter('name'))
+    directories.reverse()
+
+    # Set correct owner, mtime and filemode on directories.
+    for tarinfo in directories:
+        dirpath = os.path.join(path, tarinfo.name)
+        try:
+            tar.chown(tarinfo, dirpath)
+            tar.utime(tarinfo, dirpath)
+            tar.chmod(tarinfo, dirpath)
+        except tarfile.ExtractError, e:
+            if tar.errorlevel > 1:
+                raise
+            else:
+                raise Exception(1, "tarfile: %s" % e)
+
+    file_numbers.sub()
+    print("=============file_numbers2 cnt:", file_numbers.cnt())
+    t.join()
+
+
+
 if __name__ == '__main__':
     start_sec = time.time()
     print("==============CMAKE_SOURCE_DIR:" + CMAKE_SOURCE_DIR)
     # extract_test2()
     # extract_test()
-    count = Count()
-    extract_test2(count)
+    # count = Count()
+    # extract_test2(count)
     # single_thread()
     # mult_thread_test()
+    cmake_tar_file = os.path.join(CMAKE_SOURCE_DIR, 'cmake-3.23.1.tar.gz')
+    extract_file(cmake_tar_file, CMAKE_SOURCE_DIR)
     end_sec = time.time()
     consume_sec = end_sec - start_sec
     # print("==============main end")
