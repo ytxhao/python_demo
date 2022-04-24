@@ -248,7 +248,11 @@ class Count:
 
 
 def progressBar(progress, total):
-    print("==progressbar", progress, total)
+    i = progress * 100 / total
+    ir = str(i).rjust(3, " ")
+    print("\r", end="")
+    print("Extract progress: {}%: ".format(ir), "▋" * (i // 2), end="")
+    # print("==progressbar", progress, total)
 
 
 def showProgress(file_numbers, total_number):
@@ -286,7 +290,7 @@ def extract_file(file_name, path="."):
         if i != file_count:
             file_numbers.sub()
 
-    print("=============file_numbers cnt:", file_numbers.cnt())
+    # print("=============file_numbers cnt:", file_numbers.cnt())
     # Reverse sort directories.
     directories.sort(key=operator.attrgetter('name'))
     directories.reverse()
@@ -305,7 +309,7 @@ def extract_file(file_name, path="."):
                 raise Exception(1, "tarfile: %s" % e)
 
     file_numbers.sub()
-    print("=============file_numbers2 cnt:", file_numbers.cnt())
+    # print("=============file_numbers2 cnt:", file_numbers.cnt())
     t.join()
 
 
