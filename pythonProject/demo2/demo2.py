@@ -251,7 +251,11 @@ def progressBar(progress, total):
     i = progress * 100 / total
     ir = str(i).rjust(3, " ")
     print("\r", end="")
-    print("Extract progress: {}%: ".format(ir), "▋" * (i // 2), end="")
+    if i == 100:
+        print("Extract progress: {}%: ".format(ir), "▋" * (i // 2))
+    else:
+        print("Extract progress: {}%: ".format(ir), "▋" * (i // 2), end="")
+    sys.stdout.flush()
     # print("==progressbar", progress, total)
 
 
@@ -267,6 +271,7 @@ def showProgress(file_numbers, total_number):
 
 
 def extract_file(file_name, path="."):
+    progressBar(0, 100)
     tar = tarfile.open(file_name)
     members = tar.getmembers()
     file_count = len(members)
@@ -302,12 +307,13 @@ def extract_file(file_name, path="."):
             tar.chown(tarinfo, dirpath)
             tar.utime(tarinfo, dirpath)
             tar.chmod(tarinfo, dirpath)
-        except tarfile.ExtractError, e:
+        except tarfile.ExtractError as e:
             if tar.errorlevel > 1:
                 raise
             else:
                 raise Exception(1, "tarfile: %s" % e)
 
+    tar.close()
     file_numbers.sub()
     # print("=============file_numbers2 cnt:", file_numbers.cnt())
     t.join()
